@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="ISO-8859-15">
+    <title>Title</title>
+</head>
+<body>
+<script type="text/javascript">
+    var nteclas=0;
+    var told;
+    var cadencias=new Array();
+    //Variables train
+    var muestras=new Array();
+    var pass;
+
+    //Funciones test
+   function botones(valor) {
+        var t=Date.now();
+        if(nteclas==0){
+            told=t;
+        }else{
+            cadencias[nteclas-1]=t-told;
+            told=t;
+        }
+        nteclas++;
+      //Almacenamos en valor de la tecla pulsada
+      var teclapulsada=valor.keyCode;
+      //document.getElementById('respuesta').innerHTML='Tecla='+teclapulsada+' en t='+t+' nteclas='+nteclas+' cadencias='+cadencias.toString();
+   }
+   function getRes(){
+      var ttotal=0, c23=0; //Tiempo total y cadencia entre la segunda y tercera pulsación
+       for(var i=0;i<(nteclas-1);i++){
+           ttotal+=cadencias[i];
+       }
+       //media=ttotal/(nteclas-1);
+       c23=cadencias[1];
+        return new Array(ttotal,c23);
+   }
+   function resultados(){
+       document.getElementById('respuesta').innerHTML='';
+       var r=getRes();
+       var formData = new FormData();
+       formData.append("pass",pass); //Agrego la contaseña
+       formData.append("t0",r[0]); //Tiempo total de la muestra
+       formData.append("c0",r[1]); //Cadencia entre segunda y tercera
+        //Envio los datos al servidor
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "http://proyectosraspiadv.hopto.org/cerrojo/test");
+        xhr.send(formData);
+        //Espero a recibir una respuesta asíncronamente
+        xhr.onreadystatechange = function() { //Es lógico que vaya como evento, porque hasta no recibir respuesta no hay nada que mostrar
+            if(xhr.readyState==4)
+                if(xhr.responseText=="OK")//Con OK, mostrar algo llamativo con ACCESO CONCEDIDO
+                    document.getElementById('respuesta').innerHTML+='<br><p style="color:black; background-color: green; font-weight: bold; text-align: center; text-shadow: 2px 2px 5px grey; font-size: 80px; padding:30px;">ACCESO CONCEDIDO</p>';
+                else //Algo llamativo con ACCESO DENEGADO
+                    document.getElementById('respuesta').innerHTML+='<br><p style="color:black; background-color: red; font-weight: bold; text-align: center; text-shadow: 2px 2px 5px grey; font-size: 80px; padding:30px;">ACCESO DENEGADO</p>';
+        }
+        //Y muestro los datos enviados
+        //document.getElementById('respuesta').innerHTML+='Test:<br>Tiempo total='+r[0]+'<br>Cadencia entre segunda y tercera='+r[1]+'<br>';
+        nteclas=0;
+        document.getElementById('campoTest').value='';
+   }
+   function resetTrain(){
+       muestras = new Array();
+       nteclas=0;
+       document.getElementById('respuesta').innerHTML='Entrenamiento reseteado';
+   }
+   function addTrain(){
+       var r=getRes();
+       if(muestras.length==0){
+           pass=document.getElementById('campoTrain').value;
+       }
+       if(pass==document.getElementById('campoTrain').value){
+           muestras.push(r);
+           document.getElementById('respuesta').innerHTML='Muestra de entrenamiento agregada:<br>Tiempo total='+r[0]+'<br>Cadencia entre segunda y tercera='+r[1]+'<br>Muestras totales='+muestras.length;
+        }else{
+            document.getElementById('respuesta').innerHTML='Password distinta de la primera';
+        }
+        document.getElementById('campoTrain').value='';
+       nteclas=0;
+   }
+   function saveTrain(){
+       var res='';
+       var formData = new FormData();
+       //Aquí uso el webservice que envía al servidor los datos
+       formData.append("N",muestras.length); //Agrego el número de muestras
+       formData.append("pass",pass); //Agrego la contaseña
+       for(var i=0;i<muestras.length;i++){
+           res+='Total: '+muestras[i][0]+' ; Media: '+muestras[i][1]+'<br>';
+           formData.append("t"+i,muestras[i][0]); //Tiempo total de la muestra
+           formData.append("c"+i,muestras[i][1]); //Cadencia entre segunda y tercera
+        }
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "http://proyectosraspiadv.hopto.org/cerrojo/train");
+        xhr.send(formData);
+        xhr.onreadystatechange = function() { //Es lógico que vaya como evento, porque hasta no recibir respuesta no hay nada que mostrar
+            if(xhr.readyState==4)
+                document.getElementById('respuesta').innerHTML='<br>Respuesta: '+xhr.responseText;
+        }
+        //Y muestro los datos enviados
+        document.getElementById('respuesta').innerHTML='Resultados enviados:<br>'+res;
+   }
+
+    function showPassword() {
+        var x = document.getElementById("campoTest");
+        if (x.type === "password") {
+            x.type = "text";
+        } else {
+            x.type = "password";
+        }
+    }
+</script>
+<!--Lo del stopPropagation es para que Edge no de error de autoformfill-->
+<form onsubmit="event.stopPropagation();">
+    <label>Entrenamiento:</label>
+    <input type="text" id="campoTrain" onkeypress="botones(event);" oninput="event.stopPropagation();">
+    <input type="button" name="baddTrain" onclick="addTrain();" value="Añadir muestra">
+    <input type="button" name="bresetTrain" onclick="resetTrain();" value="Iniciar entrenamiento">
+    <input type="button" name="bsaveTrain" onclick="saveTrain();" value="Guardar entrenamiento">
+</form>
+<br><br>
+<form onsubmit="event.stopPropagation();">
+    <label>Test:</label>
+   <input type="password" id="campoTest" name="campoTest" onkeypress="botones(event);" oninput="event.stopPropagation();">
+    <input type="button" name="ponResultados" onclick="resultados();" value="Resultado">
+    <br>
+    <input type="checkbox" onclick="showPassword()">Mostrar constraseña
+</form>
+<div id="respuesta" style="margin-top:10px"></div>
+</body>
+</html>
+

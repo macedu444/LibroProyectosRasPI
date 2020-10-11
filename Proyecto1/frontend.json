@@ -1,0 +1,42 @@
+{
+    "interactionModel": {
+        "languageModel": {
+            "invocationName": "servidor local",
+            "intents": [
+                {
+                    "name": "AMAZON.CancelIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.HelpIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.StopIntent",
+                    "samples": []
+                },
+                {
+                    "name": "PonAmbienteIntent",
+                    "slots": [],
+                    "samples": [
+                        "activa ambiente",
+                        "pon ambiente"
+                    ]
+                },
+                {
+                    "name": "AMAZON.NavigateHomeIntent",
+                    "samples": []
+                },
+                {
+                    "name": "QuitaAmbienteIntent",
+                    "slots": [],
+                    "samples": [
+                        "desactiva ambiente",
+                        "quita ambiente"
+                    ]
+                }
+            ],
+            "types": []
+        }
+    }
+}
